@@ -24,13 +24,21 @@ async def rate_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Check if user already voted (votes_data is a dictionary)
     votes = dict(bot.votes_data) if bot.votes_data else {}
     
-    if str(user_id) in votes: # JSON keys are strings
-        await query.answer("⚠️ You have already rated this bot!", show_alert=True)
-        session.close()
-        return
+    if str(user_id) in votes:
+        previous_score = votes[str(user_id)]
+        if previous_score == score:
+            await query.answer(f"✅ You already rated {score} stars!", show_alert=False)
+            session.close()
+            return
+        else:
+            # Update vote
+            votes[str(user_id)] = score
+            context_text = f"✅ Rating updated to {score} stars!"
+    else:
+        # New vote
+        votes[str(user_id)] = score
+        context_text = f"✅ You rated {score} stars!"
         
-    # Update stats
-    votes[str(user_id)] = score
     bot.votes_data = votes # Assign updated votes to bot object
     
     # Calculate new rating (average)
@@ -72,7 +80,7 @@ async def rate_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     try:
         await query.edit_message_text(new_text, reply_markup=query.message.reply_markup, parse_mode="HTML")
-        await query.answer(f"✅ You rated {score} stars!")
+        await query.answer(context_text)
     except Exception as e:
         print(f"Rating update failed: {e}")
         await query.answer("⚠️ Failed to update rating display.", show_alert=True)

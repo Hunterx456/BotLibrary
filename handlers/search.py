@@ -14,13 +14,26 @@ async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # unaccent(column).ilike('%query%') isn't enough if query has no accent but column does.
     # We should unaccent both sides: unaccent(column) ILIKE unaccent('%query%')
     
-    results = session.query(Bot).filter(
-        or_(
-            func.unaccent(Bot.username).ilike(func.unaccent(f"%{query_text}%")),
-            func.unaccent(Bot.description).ilike(func.unaccent(f"%{query_text}%")),
-            func.unaccent(Bot.features).ilike(func.unaccent(f"%{query_text}%"))
-        )
-    ).order_by(Bot.rating.desc()).limit(5).all()
+    # Try Accent-Insensitive Search (Postgres with unaccent)
+    try:
+        results = session.query(Bot).filter(
+            or_(
+                func.unaccent(Bot.username).ilike(func.unaccent(f"%{query_text}%")),
+                func.unaccent(Bot.description).ilike(func.unaccent(f"%{query_text}%")),
+                func.unaccent(Bot.features).ilike(func.unaccent(f"%{query_text}%"))
+            )
+        ).order_by(Bot.rating.desc()).limit(5).all()
+    except Exception as e:
+        print(f"Unaccent search failed (falling back to simple search): {e}")
+        session.rollback()
+        # Fallback to standard ILIKE (Case-insensitive but accent-sensitive)
+        results = session.query(Bot).filter(
+            or_(
+                Bot.username.ilike(f"%{query_text}%"),
+                Bot.description.ilike(f"%{query_text}%"),
+                Bot.features.ilike(f"%{query_text}%")
+            )
+        ).order_by(Bot.rating.desc()).limit(5).all()
     
     session.close()
     

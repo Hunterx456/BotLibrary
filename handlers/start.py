@@ -5,6 +5,10 @@ from database import SessionLocal, User, Bot
 import html
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Ignore in groups
+    if update.effective_chat.type != "private":
+        return
+
     user = update.effective_user
     
     # Add user to DB if new

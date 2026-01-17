@@ -214,10 +214,8 @@ async def mod_actions(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # If we have the channel post, add the link
             if 'msg' in locals():
                 post_link = msg.link
-                # fallback for private channels if link is None (should exist for supergroups)
+                # fallback for private channels
                 if not post_link and config.CHANNEL_ID:
-                    # Construct manual link if automatic one fails (works for public channels)
-                    # For private, it's https://t.me/c/ID/MSG_ID
                     if str(config.CHANNEL_ID).startswith("-100"):
                          clean_id = str(config.CHANNEL_ID).replace("-100", "")
                          post_link = f"https://t.me/c/{clean_id}/{msg.message_id}"
@@ -232,9 +230,12 @@ async def mod_actions(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 reply_markup=InlineKeyboardMarkup(notification_keyboard) if notification_keyboard else None
             )
         except Exception as e:
-            print(f"Failed to notify user: {e}") # User might have blocked bot
+            print(f"Failed to notify user: {e}") 
             
-        await query.edit_message_text(f"✅ Approved by {query.from_user.username}")
+        # Update Mod Message
+        approver_name = html.escape(query.from_user.first_name)
+        approver_link = f"<a href='tg://user?id={query.from_user.id}'>{approver_name}</a>"
+        await query.edit_message_text(f"✅ Approved by {approver_link}", parse_mode="HTML")
 
     elif data.startswith("mod_reject_"):
         # Format: mod_reject_{sub_id} OR mod_reject_{sub_id}_{reason_code}

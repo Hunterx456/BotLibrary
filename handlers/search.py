@@ -1,8 +1,7 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler
 from database import SessionLocal, Bot
-from sqlalchemy import or_
-import html
+from sqlalchemy import or_, func
 
 async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query_text = " ".join(context.args)
@@ -11,18 +10,15 @@ async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     session = SessionLocal()
-    # Basic search: match username or description containing the query (case insensitive)
-    # For "percentage matching", complex fuzzy search is hard in standard SQL without extensions.
-    # We will use ILIKE/contains and then sort by Rating (Topic 5 rated as requested).
-    
-    # search_term = f"%{query_text}%"
-    # standard SQL 'ilike' equivalent in SQLAlchemy is .ilike()
+    # Use unaccent() to ignore accents (e.g. pokemon matches Pokémon)
+    # unaccent(column).ilike('%query%') isn't enough if query has no accent but column does.
+    # We should unaccent both sides: unaccent(column) ILIKE unaccent('%query%')
     
     results = session.query(Bot).filter(
         or_(
-            Bot.username.ilike(f"%{query_text}%"),
-            Bot.description.ilike(f"%{query_text}%"),
-            Bot.features.ilike(f"%{query_text}%")
+            func.unaccent(Bot.username).ilike(func.unaccent(f"%{query_text}%")),
+            func.unaccent(Bot.description).ilike(func.unaccent(f"%{query_text}%")),
+            func.unaccent(Bot.features).ilike(func.unaccent(f"%{query_text}%"))
         )
     ).order_by(Bot.rating.desc()).limit(5).all()
     

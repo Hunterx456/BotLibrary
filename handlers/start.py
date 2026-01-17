@@ -1,6 +1,6 @@
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler, CallbackQueryHandler
-from database import SessionLocal, User
+from database import SessionLocal, User, Bot
 
 import html
 

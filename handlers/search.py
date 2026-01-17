@@ -2,6 +2,7 @@ from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import ContextTypes, CommandHandler
 from database import SessionLocal, Bot
 from sqlalchemy import or_, func
+import html
 
 async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query_text = " ".join(context.args)

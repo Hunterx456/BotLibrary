@@ -31,7 +31,8 @@ def main():
     from handlers.admin import (
         add_sudo_handler, rem_sudo_handler, 
         add_mod_handler, rem_mod_handler, 
-        broadcast_handler, stats_handler
+        broadcast_handler, stats_handler,
+        delete_bot_handler
     )
     from telegram.ext import CallbackQueryHandler
     
@@ -48,6 +49,7 @@ def main():
     app.add_handler(rem_mod_handler)
     app.add_handler(broadcast_handler)
     app.add_handler(stats_handler)
+    app.add_handler(delete_bot_handler)
     
     app.add_handler(CallbackQueryHandler(button_handler)) # Catch-all for other buttons like 'help'
     

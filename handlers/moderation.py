@@ -20,9 +20,9 @@ async def notify_new_submission(context: ContextTypes.DEFAULT_TYPE, submission_i
     safe_desc = html.escape(sub.description)
     safe_feat = html.escape(sub.features)
 
-    text = (
+    submitter_text = (
         "🆕 <b>NEW BOT SUBMISSION</b>\n\n"
-        f"👤 Submitted by: {sub.submitted_by}\n" # improved to show link in future
+        f"👤 Submitted by: {sub.submitted_by}\n" 
         f"🤖 Bot: {safe_user}\n\n"
         f"📝 Desc: {safe_desc}\n"
         f"⚙️ Features: {safe_feat}\n"
@@ -33,9 +33,20 @@ async def notify_new_submission(context: ContextTypes.DEFAULT_TYPE, submission_i
     keyboard = [[InlineKeyboardButton("I Will Check ✋", callback_data=f"mod_claim_{submission_id}")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    for admin_id in config.SUDO_USERS:
+    # FETCH ALL MODS FROM DB
+    staff = session.query(User).filter(User.role.in_(["owner", "sudo", "mod"])).all()
+    
+    # Create a set of IDs to avoid duplicates (and include config.OWNER_ID just in case)
+    receptionists = set()
+    if config.OWNER_ID:
+        receptionists.add(config.OWNER_ID)
+    
+    for staff_member in staff:
+        receptionists.add(staff_member.user_id)
+        
+    for admin_id in receptionists:
         try:
-            await context.bot.send_message(chat_id=admin_id, text=text, reply_markup=reply_markup, parse_mode="HTML")
+            await context.bot.send_message(chat_id=admin_id, text=submitter_text, reply_markup=reply_markup, parse_mode="HTML")
         except Exception as e:
             print(f"Failed to send mod notification to {admin_id}: {e}")
             

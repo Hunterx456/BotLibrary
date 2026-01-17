@@ -137,9 +137,57 @@ async def stats(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
     await update.message.reply_text(text, parse_mode="HTML")
     
+@restricted
+async def delete_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if not context.args:
+        await update.message.reply_text("Usage: /deletebot <username>")
+        return
+
+    username = context.args[0]
+    if not username.startswith("@"):
+        username = "@" + username
+
+    session = SessionLocal()
+    # Find the bot
+    bot = session.query(Bot).filter(Bot.username == username).first()
+    
+    if not bot:
+        await update.message.reply_text(f"❌ Bot {username} not found in library.")
+        session.close()
+        return
+
+    try:
+        # 1. Delete Channel Post
+        if bot.channel_message_id and config.CHANNEL_ID:
+            try:
+                await context.bot.delete_message(chat_id=config.CHANNEL_ID, message_id=bot.channel_message_id)
+                await update.message.reply_text("✅ Channel post deleted.")
+            except Exception as e:
+                await update.message.reply_text(f"⚠️ Could not delete channel post: {e}")
+
+        # 2. Delete from DB (Bot and Submission)
+        # Note: We should probably delete the submission or mark it deleted?
+        # User said "everything is deleted".
+        
+        # Check for related submission
+        sub = session.query(BotSubmission).filter(BotSubmission.id == bot.submission_id).first()
+        if sub:
+            session.delete(sub)
+        
+        session.delete(bot)
+        session.commit()
+        
+        await update.message.reply_text(f"✅ Bot {username} has been completely removed from the database.")
+        
+    except Exception as e:
+        await update.message.reply_text(f"❌ Error during deletion: {e}")
+        
+    session.close()
+
 add_sudo_handler = CommandHandler("addsudo", add_sudo)
 rem_sudo_handler = CommandHandler("removesudo", remove_sudo)
 add_mod_handler = CommandHandler("addmod", add_mod)
 rem_mod_handler = CommandHandler("removemod", remove_mod)
 broadcast_handler = CommandHandler("broadcast", broadcast)
 stats_handler = CommandHandler("stats", stats)
+delete_bot_handler = CommandHandler("deletebot", delete_bot)

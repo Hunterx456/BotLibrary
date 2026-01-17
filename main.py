@@ -55,6 +55,26 @@ def main():
     from handlers.inline import inline_handler
     app.add_handler(inline_handler)
     
+    # --- Keep Alive for Render ---
+    from flask import Flask
+    import threading
+    import os
+    
+    flask_app = Flask(__name__)
+    
+    @flask_app.route('/')
+    def health_check():
+        return "Bot is Alive!", 200
+        
+    def run_flask():
+        port = int(os.environ.get("PORT", 8080))
+        flask_app.run(host='0.0.0.0', port=port)
+        
+    # Start server in background thread
+    threading.Thread(target=run_flask, daemon=True).start()
+    print("Web server started for UptimeRobot...")
+    # -----------------------------
+    
     print("Bot is polling...")
     app.run_polling()
 

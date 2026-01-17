@@ -4,17 +4,35 @@ from telegram.ext import ContextTypes, InlineQueryHandler
 from database import SessionLocal, Bot
 from uuid import uuid4
 
+from sqlalchemy import or_, func
+
 async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.inline_query.query
     if not query:
         return
 
     session = SessionLocal()
-    # ILIKE is Postgres, for sqlite use standard like
-    if "sqlite" in str(session.bind.url):
-        results = session.query(Bot).filter(Bot.username.contains(query) | Bot.description.contains(query)).limit(10).all()
-    else:
-        results = session.query(Bot).filter(Bot.username.ilike(f"%{query}%") | Bot.description.ilike(f"%{query}%")).limit(10).all()
+    
+    try:
+        # Try accent-insensitive
+        # Postgres only
+        results = session.query(Bot).filter(
+            or_(
+                func.unaccent(Bot.username).ilike(func.unaccent(f"%{query}%")),
+                func.unaccent(Bot.description).ilike(func.unaccent(f"%{query}%")),
+                func.unaccent(Bot.features).ilike(func.unaccent(f"%{query}%"))
+            )
+        ).limit(10).all()
+    except Exception as e:
+        session.rollback()
+        # Fallback (or SQLite)
+        results = session.query(Bot).filter(
+             or_(
+                Bot.username.ilike(f"%{query}%"),
+                Bot.description.ilike(f"%{query}%"),
+                Bot.features.ilike(f"%{query}%")
+            )
+        ).limit(10).all()
     
     inline_results = []
     for bot in results:

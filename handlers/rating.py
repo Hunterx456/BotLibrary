@@ -16,10 +16,26 @@ async def rate_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
     session = SessionLocal()
     bot = session.query(Bot).filter(Bot.bot_id == bot_id).first()
     
+    
     if not bot:
         await query.answer("Bot not found!", show_alert=True)
         session.close()
         return
+
+    # --- Force Join Check ---
+    if config.CHANNEL_ID:
+        try:
+            member = await context.bot.get_chat_member(chat_id=config.CHANNEL_ID, user_id=user_id)
+            if member.status not in ["member", "administrator", "creator"]:
+                await query.answer("⚠️ You must join our channel to vote!", show_alert=True)
+                session.close()
+                return
+        except Exception as e:
+            # If bot isn't admin or can't see member status, fail gracefully (allow vote or log check fail)
+            # Usually better to allow if check fails to avoid blocking users due to bot permissions.
+            print(f"Force join check failed: {e}")
+            pass
+    # ------------------------
         
     # Check if user already voted (votes_data is a dictionary)
     votes = dict(bot.votes_data) if bot.votes_data else {}

@@ -12,3 +12,4 @@ SUDO_USERS = set(int(x) for x in os.getenv("SUDO_USERS", "").split(",") if x)
 SUDO_USERS.add(OWNER_ID)
 
 DB_URL = os.getenv("DB_URL", "sqlite:///botlibrary.db")
+STAFF_GROUP_ID = int(os.getenv("STAFF_GROUP_ID", "-1003601833258"))

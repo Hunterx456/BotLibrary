@@ -33,22 +33,29 @@ async def notify_new_submission(context: ContextTypes.DEFAULT_TYPE, submission_i
     keyboard = [[InlineKeyboardButton("I Will Check ✋", callback_data=f"mod_claim_{submission_id}")]]
     reply_markup = InlineKeyboardMarkup(keyboard)
     
-    # FETCH ALL MODS FROM DB
-    staff = session.query(User).filter(User.role.in_(["owner", "sudo", "mod"])).all()
+    submitter_text = (
+        "🆕 <b>NEW BOT SUBMISSION</b>\n\n"
+        f"👤 Submitted by: {sub.submitted_by}\n" 
+        f"🤖 Bot: {safe_user}\n\n"
+        f"📝 Desc: {safe_desc}\n"
+        f"⚙️ Features: {safe_feat}\n"
+        f"🏷️ Category: {sub.category}\n\n"
+        "Status: ⏳ Awaiting Review"
+    )
     
-    # Create a set of IDs to avoid duplicates (and include config.OWNER_ID just in case)
-    receptionists = set()
-    if config.OWNER_ID:
-        receptionists.add(config.OWNER_ID)
+    keyboard = [[InlineKeyboardButton("I Will Check ✋", callback_data=f"mod_claim_{submission_id}")]]
+    reply_markup = InlineKeyboardMarkup(keyboard)
     
-    for staff_member in staff:
-        receptionists.add(staff_member.user_id)
-        
-    for admin_id in receptionists:
-        try:
-            await context.bot.send_message(chat_id=admin_id, text=submitter_text, reply_markup=reply_markup, parse_mode="HTML")
-        except Exception as e:
-            print(f"Failed to send mod notification to {admin_id}: {e}")
+    # Send to Staff Group
+    try:
+        await context.bot.send_message(
+            chat_id=config.STAFF_GROUP_ID, 
+            text=submitter_text, 
+            reply_markup=reply_markup, 
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        print(f"Failed to send notification to Staff Group ({config.STAFF_GROUP_ID}): {e}")
             
     session.close()
 

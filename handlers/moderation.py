@@ -190,12 +190,34 @@ async def mod_actions(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         # 4. Notify User
         try:
-            await context.bot.send_message(chat_id=sub.submitted_by, text=f"🎉 Congratulations! Your bot {sub.bot_username} has been approved!")
-        except:
-            pass # User might have blocked bot
+            notification_text = f"🎉 <b>Congratulations!</b>\n\nYour bot <b>{sub.bot_username}</b> has been approved and posted to the library!"
+            notification_keyboard = []
+            
+            # If we have the channel post, add the link
+            if 'msg' in locals():
+                post_link = msg.link
+                # fallback for private channels if link is None (should exist for supergroups)
+                if not post_link and config.CHANNEL_ID:
+                    # Construct manual link if automatic one fails (works for public channels)
+                    # For private, it's https://t.me/c/ID/MSG_ID
+                    if str(config.CHANNEL_ID).startswith("-100"):
+                         clean_id = str(config.CHANNEL_ID).replace("-100", "")
+                         post_link = f"https://t.me/c/{clean_id}/{msg.message_id}"
+                    
+                if post_link:
+                    notification_keyboard.append([InlineKeyboardButton("🔗 View Post", url=post_link)])
+
+            await context.bot.send_message(
+                chat_id=sub.submitted_by, 
+                text=notification_text, 
+                parse_mode="HTML",
+                reply_markup=InlineKeyboardMarkup(notification_keyboard) if notification_keyboard else None
+            )
+        except Exception as e:
+            print(f"Failed to notify user: {e}") # User might have blocked bot
             
         await query.edit_message_text(f"✅ Approved by {query.from_user.username}")
-        
+
     elif data.startswith("mod_reject_"):
         # Format: mod_reject_{sub_id} OR mod_reject_{sub_id}_{reason_code}
         parts = data.split("_")

@@ -39,6 +39,13 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
         safe_user = html.escape(bot.username)
         safe_desc = html.escape(bot.description)
         
+        # Construct Channel Link
+        import config
+        post_link = f"https://t.me/{bot.username.replace('@', '')}"
+        if bot.channel_message_id and config.CHANNEL_ID:
+             clean_id = str(config.CHANNEL_ID).replace("-100", "")
+             post_link = f"https://t.me/c/{clean_id}/{bot.channel_message_id}"
+
         inline_results.append(
             InlineQueryResultArticle(
                 id=str(uuid4()),
@@ -47,10 +54,12 @@ async def inline_query(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 input_message_content=InputTextMessageContent(
                     f"🔥 Check out <b>{safe_user}</b> on BotLibrary!\n\n"
                     f"📝 {safe_desc}\n"
-                    f"⭐ Rating: {bot.rating}/5.0 ({bot.vote_count} votes)",
+                    f"⭐ Rating: {bot.rating}/5.0 ({bot.vote_count} votes)\n\n"
+                    f"🔗 <a href='{post_link}'>View in Channel</a>",
                     parse_mode="HTML"
                 ),
-                thumb_url="https://cdn-icons-png.flaticon.com/512/4712/4712035.png", # Placeholder
+                url=post_link, # This makes the title clickable in the result list (on some clients)
+                thumb_url="https://cdn-icons-png.flaticon.com/512/4712/4712035.png",
             )
         )
     

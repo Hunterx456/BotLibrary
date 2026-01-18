@@ -29,6 +29,7 @@ def main():
     from handlers.moderation import moderation_handler
     from handlers.rating import rating_handler
     from handlers.search import search_handler
+    from handlers.list_bots import list_handler, list_callback_handler
     from handlers.admin import (
         add_sudo_handler, rem_sudo_handler, 
         add_mod_handler, rem_mod_handler, 
@@ -43,6 +44,8 @@ def main():
     app.add_handler(moderation_handler)
     app.add_handler(rating_handler)
     app.add_handler(search_handler)
+    app.add_handler(list_handler)
+    app.add_handler(list_callback_handler)
     
     # Admin
     app.add_handler(add_sudo_handler)

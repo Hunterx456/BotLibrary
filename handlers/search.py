@@ -55,7 +55,17 @@ async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Inline Link Button
         # User requested "inline link button". 
         # We can put them all in one keyboard.
+import config
+
+        # Link to channel post if available
+        # Default: Bot Link
         link = f"https://t.me/{bot.username.replace('@', '')}"
+        
+        if bot.channel_message_id and config.CHANNEL_ID:
+             clean_id = str(config.CHANNEL_ID).replace("-100", "")
+             # Using private link format which works for members (public too if they are members)
+             link = f"https://t.me/c/{clean_id}/{bot.channel_message_id}"
+             
         keyboard.append([InlineKeyboardButton(f"🔗 {safe_name} ({bot.rating}⭐)", url=link)])
         
     await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="HTML")

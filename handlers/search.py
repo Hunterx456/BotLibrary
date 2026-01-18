@@ -3,6 +3,7 @@ from telegram.ext import ContextTypes, CommandHandler
 from database import SessionLocal, Bot
 from sqlalchemy import or_, func
 import html
+import config
 
 async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query_text = " ".join(context.args)
@@ -55,8 +56,6 @@ async def search_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         # Inline Link Button
         # User requested "inline link button". 
         # We can put them all in one keyboard.
-import config
-
         # Link to channel post if available
         # Default: Bot Link
         link = f"https://t.me/{bot.username.replace('@', '')}"
